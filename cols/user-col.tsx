@@ -1,22 +1,22 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { Column, ColumnDef, FilterFn } from "@tanstack/react-table";
 import { User } from "@/types/type";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
-import { MoreHorizontal, Pencil, Trash, Eye, Trash2 } from "lucide-react";
+import {
+  Pencil,
+  Eye,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  Minus,
+} from "lucide-react";
+import { useState } from "react";
 
 // Define event handler types
 export interface UserTableActions {
@@ -26,60 +26,162 @@ export interface UserTableActions {
   onRowClick: (user: User, isSelected: boolean) => void;
 }
 
+const dateEqualsFilter: FilterFn<any> = (row, columnId, filterValue) => {
+  if (!filterValue) return true; // no filter applied
+
+  const rowDate = new Date(row.getValue(columnId));
+  const filterDate = new Date(filterValue);
+
+  // Compare only the date part (ignore time)
+  return (
+    rowDate.getFullYear() === filterDate.getFullYear() &&
+    rowDate.getMonth() === filterDate.getMonth() &&
+    rowDate.getDate() === filterDate.getDate()
+  );
+};
+
+// Bio cell with expand/collapse
+function BioCell({ bio }: { bio: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const maxLength = 50;
+  const shouldTruncate = bio.length > maxLength;
+
+  return (
+    <div className="max-w-sm flex items-center justify-between">
+      <p className="text-sm  whitespace-normal">
+        {shouldTruncate && !isExpanded ? `${bio.slice(0, maxLength)}...` : bio}
+      </p>
+      {shouldTruncate && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-auto p-2 cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+        >
+          {isExpanded ? (
+            <ChevronUp className="h-3 w-3 mr-1" />
+          ) : (
+            <ChevronDown className="h-3 w-3 mr-1" />
+          )}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+export function SortableHeader({
+  column,
+  title,
+}: {
+  column: Column<any, unknown>;
+  title: string;
+}) {
+  const isSorted = column.getIsSorted();
+  return (
+    <Button
+      variant="ghost"
+      onClick={() => column.toggleSorting(isSorted === "asc")}
+      className=" p-0 cursor-pointer hover:bg-black/5"
+    >
+      {title}
+      {isSorted === "asc" ? (
+        <ChevronUp className="ml-2 h-4 w-4" />
+      ) : isSorted === "desc" ? (
+        <ChevronDown className="ml-2 h-4 w-4" />
+      ) : (
+        <Minus className="ml-2 h-4 w-4" />
+      )}
+    </Button>
+  );
+}
+
 export const createUserColumns = (
   actions: UserTableActions
 ): ColumnDef<User>[] => [
   {
-    accessorKey: "",
     id: "select",
-    size: 10,
-    cell: ({ row }) => {
-      return (
-        <div className="w-full h-full flex justify-center items-center">
-          <Checkbox
-            className="cursor-pointer"
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => {
-              row.toggleSelected(!!value);
-
-              actions.onRowClick(row.original, !!value);
-            }}
-            aria-label="Select row"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      );
-    },
+    header: ({ table }) => (
+      <div className="flex justify-center items-center">
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+          className="cursor-pointer"
+        />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex justify-center items-center">
+        <Checkbox
+          className="cursor-pointer"
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => {
+            row.toggleSelected(!!value);
+            actions.onRowClick(row.original, !!value);
+          }}
+          aria-label="Select row"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    ),
+    enableSorting: false,
+    enableHiding: false,
+    size: 80,
   },
   {
-    accessorKey: "name",
-    header: "User",
+    accessorKey: "avatar",
+    header: "Avatar",
     cell: ({ row }) => {
       const user = row.original;
       return (
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="font-medium">{user.name}</div>
-            <div className="text-sm text-muted-foreground">{user.email}</div>
-          </div>
-        </div>
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={user.avatar} alt={user.name} />
+          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+        </Avatar>
       );
     },
+    size: 60,
   },
   {
-    accessorKey: "role",
-    header: "Role",
-    cell: ({ row }) => {
-      return <span className="capitalize">{row.getValue("role")}</span>;
+    accessorKey: "name",
+    header: ({ column }) => {
+      return <SortableHeader column={column} title="Name" />;
     },
+    cell: ({ row }) => (
+      <div className="font-medium">{row.getValue("name")}</div>
+    ),
+  },
+  {
+    accessorKey: "email",
+    header: ({ column }) => {
+      return <SortableHeader column={column} title="Email" />;
+    },
+    cell: ({ row }) => (
+      <div className="text-sm text-muted-foreground">
+        {row.getValue("email")}
+      </div>
+    ),
   },
   {
     accessorKey: "phoneNumber",
     header: "Phone",
+    cell: ({ row }) => (
+      <div className="text-sm">{row.getValue("phoneNumber")}</div>
+    ),
+  },
+  {
+    accessorKey: "role",
+    header: "Role",
+    cell: ({ row }) => <Badge variant="default">{row.getValue("role")}</Badge>,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
   },
   {
     accessorKey: "active",
@@ -92,28 +194,45 @@ export const createUserColumns = (
         </Badge>
       );
     },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
   },
   {
     accessorKey: "createdAt",
-    header: "Created",
+    header: ({ column }) => {
+      return <SortableHeader column={column} title="Created At" />;
+    },
     cell: ({ row }) => {
       const date = new Date(row.getValue("createdAt"));
-      return date.toLocaleDateString();
+      return (
+        <div className="text-sm">
+          {date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
+        </div>
+      );
     },
+    filterFn: dateEqualsFilter,
+  },
+  {
+    accessorKey: "bio",
+    header: "Bio",
+    cell: ({ row }) => <BioCell bio={row.getValue("bio")} />,
   },
   {
     id: "actions",
     header: () => <div className="text-center">Actions</div>,
     cell: ({ row }) => {
       const user = row.original;
-
       return (
-        <div className="flex items-center justify-center gap-2">
-          {/* Direct action buttons */}
+        <div className="flex items-center justify-center gap-1">
           <Button
             variant="ghost"
             size="icon"
-            className="cursor-pointer"
+            className="h-8 w-8"
             onClick={(e) => {
               e.stopPropagation();
               actions.onView(user);
@@ -124,7 +243,7 @@ export const createUserColumns = (
           <Button
             variant="ghost"
             size="icon"
-            className="cursor-pointer"
+            className="h-8 w-8"
             onClick={(e) => {
               e.stopPropagation();
               actions.onEdit(user);
@@ -132,11 +251,10 @@ export const createUserColumns = (
           >
             <Pencil className="h-4 w-4" />
           </Button>
-
           <Button
             variant="ghost"
             size="icon"
-            className="cursor-pointer "
+            className="h-8 w-8"
             onClick={(e) => {
               e.stopPropagation();
               actions.onDelete(user);
@@ -147,5 +265,6 @@ export const createUserColumns = (
         </div>
       );
     },
+    size: 120,
   },
 ];
