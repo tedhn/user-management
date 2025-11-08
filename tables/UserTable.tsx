@@ -105,8 +105,9 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center py-4">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-4 py-4 lg:flex-row lg:justify-between lg:items-center">
+        {/* Filters Section */}
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
           {/* Search Input */}
           <Input
             placeholder="Search name or email..."
@@ -120,7 +121,7 @@ export function DataTable<TData, TValue>({
               table.getColumn("name")?.setFilterValue(value);
               table.getColumn("email")?.setFilterValue(value);
             }}
-            className="w-60"
+            className="w-full sm:w-60"
           />
 
           {/* Role Filter */}
@@ -131,7 +132,7 @@ export function DataTable<TData, TValue>({
                 ?.setFilterValue(value === "all" ? undefined : value)
             }
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Filter by role" />
             </SelectTrigger>
             <SelectContent>
@@ -144,22 +145,26 @@ export function DataTable<TData, TValue>({
             </SelectContent>
           </Select>
 
-          {/*Created Date Filter */}
+          {/* Created Date Filter */}
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="w-[180px] justify-start text-left font-normal"
+                className="w-full sm:w-[180px] justify-start text-left font-normal"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {table.getColumn("createdAt")?.getFilterValue()
-                  ? format(
-                      new Date(
-                        table.getColumn("createdAt")?.getFilterValue() as string
-                      ),
-                      "PPP"
-                    )
-                  : "Filter by date"}
+                <span className="truncate">
+                  {table.getColumn("createdAt")?.getFilterValue()
+                    ? format(
+                        new Date(
+                          table
+                            .getColumn("createdAt")
+                            ?.getFilterValue() as string
+                        ),
+                        "PPP"
+                      )
+                    : "Filter by date"}
+                </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -182,28 +187,37 @@ export function DataTable<TData, TValue>({
             </PopoverContent>
           </Popover>
 
+          {/* Clear Filters Button */}
           <Button
             variant="secondary"
             onClick={() => {
               table.resetColumnFilters();
             }}
-            size={"icon"}
+            className="w-full sm:size-9"
           >
             <RefreshCcw className="h-4 w-4" />
+            <span className="ml-2 sm:hidden">Clear Filters</span>
           </Button>
         </div>
 
-        <div className="flex gap-2">
+        {/* Actions Section */}
+        <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
           <Button
             onClick={() =>
               handleBulkDelete(selectedRows.map((row) => row.original as User))
             }
             variant="destructive"
             disabled={selectedRows.length === 0}
+            className="w-full sm:flex-1 lg:w-auto"
           >
-            Delete Users
+            Delete Users {selectedRows.length > 0 && `(${selectedRows.length})`}
           </Button>
-          <Button onClick={() => router.push("/user/new")}>Add User</Button>
+          <Button
+            onClick={() => router.push("/user/new")}
+            className="w-full sm:flex-1 lg:w-auto"
+          >
+            Add User
+          </Button>
         </div>
       </div>
       <div className="rounded-md border">
