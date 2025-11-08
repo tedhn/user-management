@@ -1,5 +1,6 @@
 "use client";
 import { createUserColumns } from "@/cols/user-col";
+import Header from "@/components/Header";
 import { useDeleteUser, useUsers } from "@/hooks/useUser";
 import { DataTable } from "@/tables/UserTable";
 import { User } from "@/types/type";
@@ -40,8 +41,10 @@ const UsersPage = () => {
   if (error) return <div>Error: {error.message}</div>;
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">Users</h1>
+    <div className="container mx-auto py-10 ">
+      <Header>
+        <h1 className="text-3xl font-bold mb-6">Users</h1>
+      </Header>
       <DataTable columns={columns} data={data || []} roles={roles} />
     </div>
   );

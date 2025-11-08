@@ -1,8 +1,7 @@
 "use client";
 
 import UserFormPage from "@/components/UserForm";
-import { User, UserFormValues } from "@/types/type";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { UserFormValues } from "@/types/type";
 import { toast } from "sonner";
 import { useParams, useRouter } from "next/navigation";
 import { useUpdateUser, useUser } from "@/hooks/useUser";

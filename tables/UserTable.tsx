@@ -189,7 +189,7 @@ export function DataTable<TData, TValue>({
 
           {/* Clear Filters Button */}
           <Button
-            variant="secondary"
+            variant="outline"
             onClick={() => {
               table.resetColumnFilters();
             }}
