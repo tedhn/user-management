@@ -39,21 +39,24 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, RefreshCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useDeleteUser } from "@/hooks/useUser";
+import { toast } from "sonner";
+import { User } from "@/types/type";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  onSelectionChange?: (selectedRows: TData[]) => void;
-  onRowClick?: (row: TData) => void;
+  roles: string[];
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  onSelectionChange,
-  onRowClick,
+  roles,
 }: DataTableProps<TData, TValue>) {
+  const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -81,18 +84,24 @@ export function DataTable<TData, TValue>({
     },
   });
 
-  // Notify parent component of selection changes
-  React.useEffect(() => {
-    if (onSelectionChange) {
-      const selectedRows = table
-        .getFilteredSelectedRowModel()
-        .rows.map((row) => row.original);
-      onSelectionChange(selectedRows);
-    }
-  }, [rowSelection, onSelectionChange, table]);
+  const deleteUserMutation = useDeleteUser();
 
   // Get selected rows for internal use
   const selectedRows = table.getFilteredSelectedRowModel().rows;
+
+  const handleBulkDelete = (selectedUsers: User[]) => {
+    const userIds = selectedUsers.map((user) => user.id);
+
+    toast.promise(
+      () =>
+        Promise.all(userIds.map((id) => deleteUserMutation.mutateAsync(id))),
+      {
+        loading: "Deleting users...",
+        success: "Users deleted successfully.",
+        error: "Error deleting users.",
+      }
+    );
+  };
 
   return (
     <div className="w-full">
@@ -127,9 +136,11 @@ export function DataTable<TData, TValue>({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
-              <SelectItem value="superadmin">Super Admin</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="salesperson">Salesperson</SelectItem>
+              {roles.map((role) => (
+                <SelectItem key={role} value={role}>
+                  {role}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -170,26 +181,29 @@ export function DataTable<TData, TValue>({
               />
             </PopoverContent>
           </Popover>
-        </div>
 
-        {/* Clear Filters Button */}
-        <div className="flex gap-2">
           <Button
             variant="secondary"
             onClick={() => {
               table.resetColumnFilters();
             }}
+            size={"icon"}
           >
-            Clear Filters
+            <RefreshCcw className="h-4 w-4" />
           </Button>
+        </div>
 
+        <div className="flex gap-2">
           <Button
-            onClick={() => console.log("Delete users:", selectedRows)}
+            onClick={() =>
+              handleBulkDelete(selectedRows.map((row) => row.original as User))
+            }
             variant="destructive"
             disabled={selectedRows.length === 0}
           >
             Delete Users
           </Button>
+          <Button onClick={() => router.push("/user/new")}>Add User</Button>
         </div>
       </div>
       <div className="rounded-md border">
@@ -218,8 +232,6 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  onClick={() => onRowClick?.(row.original)}
-                  className={onRowClick ? "cursor-pointer" : ""}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

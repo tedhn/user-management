@@ -23,7 +23,6 @@ export interface UserTableActions {
   onView: (user: User) => void;
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
-  onRowClick: (user: User, isSelected: boolean) => void;
 }
 
 const dateEqualsFilter: FilterFn<any> = (row, columnId, filterValue) => {
@@ -123,7 +122,6 @@ export const createUserColumns = (
           checked={row.getIsSelected()}
           onCheckedChange={(value) => {
             row.toggleSelected(!!value);
-            actions.onRowClick(row.original, !!value);
           }}
           aria-label="Select row"
           onClick={(e) => e.stopPropagation()}

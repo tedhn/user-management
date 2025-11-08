@@ -1,45 +1,37 @@
 "use client";
 import { createUserColumns } from "@/cols/user-col";
+import { useDeleteUser, useUsers } from "@/hooks/useUser";
 import { DataTable } from "@/tables/UserTable";
 import { User } from "@/types/type";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { create } from "domain";
-import { useState } from "react";
 
-async function fetchUsers(): Promise<User[]> {
-  const data = await axios.get(
-    "https://68ff8c08e02b16d1753e6ed3.mockapi.io/maia/api/v1/user"
-  );
-
-  return data.data;
-}
+import { useRouter } from "next/navigation";
+import { use, useState } from "react";
+import { toast } from "sonner";
 
 const UsersPage = () => {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["users"],
-    queryFn: fetchUsers,
-  });
+  const router = useRouter();
+
+  const { data, isLoading, error } = useUsers();
+  const deleteUserMutation = useDeleteUser();
 
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+
+  // TODO: cant select every user when checking the header checkbox, only the visiable users on the current page
+
+  const roles = data ? Array.from(new Set(data.map((user) => user.role))) : [];
 
   const columns = createUserColumns({
     onView: (user: User) => {
       console.log("View user:", user);
     },
     onEdit: (user: User) => {
-      console.log("Edit user:", user);
+      router.push(`/user/${user.id}`);
     },
     onDelete: (user: User) => {
-      console.log("Delete user:", user);
-    },
-    onRowClick: (user: User, isSelected: boolean) => {
-      setSelectedUsers((prevSelected) => {
-        if (isSelected) {
-          return [...prevSelected, user];
-        } else {
-          return prevSelected.filter((u) => u.id !== user.id);
-        }
+      toast.promise(deleteUserMutation.mutateAsync(user.id), {
+        loading: "Deleting user...",
+        success: "User deleted successfully!",
+        error: "Error deleting user.",
       });
     },
   });
@@ -50,7 +42,7 @@ const UsersPage = () => {
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-6">Users</h1>
-      <DataTable columns={columns} data={data || []} />
+      <DataTable columns={columns} data={data || []} roles={roles} />
     </div>
   );
 };
