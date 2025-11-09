@@ -3,7 +3,15 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./globals.css";
 import { QueryProvider } from "@/lib/provider";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
+
+import {
+  InfoIcon,
+  CircleCheckIcon,
+  TriangleAlertIcon,
+  OctagonXIcon,
+} from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +40,15 @@ export default function RootLayout({
       >
         <QueryProvider>
           <div className="p-4">{children}</div>
-          <Toaster />
+          <Toaster
+            icons={{
+              info: <InfoIcon className="size-4 text-blue-500" />,
+              success: <CircleCheckIcon className="size-4 text-green-500" />,
+              warning: <TriangleAlertIcon className="size-4 text-yellow-500" />,
+              error: <OctagonXIcon className="size-4 text-red-500" />,
+              loading: <Spinner className="size-4" />,
+            }}
+          />
         </QueryProvider>
       </body>
     </html>

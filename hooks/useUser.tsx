@@ -29,6 +29,7 @@ export const useUser = (id: string) => {
     queryKey: userKeys.detail(id),
     queryFn: () => fetchSingleUser(id),
     enabled: !!id,
+    retry: 2,
   });
 };
 
