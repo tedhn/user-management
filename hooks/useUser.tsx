@@ -116,6 +116,7 @@ export const useDeleteUser = () => {
 
   return useMutation({
     mutationFn: (id: string) => deleteUser(id),
+
     onMutate: async (id) => {
       // Cancel queries
       await queryClient.cancelQueries({ queryKey: userKeys.lists() });

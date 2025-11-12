@@ -2,9 +2,10 @@
 import { createUserColumns } from "@/cols/user-col";
 import { DeleteConfirmationDialog } from "@/components/dialog/DeleteDialog";
 import Header from "@/components/Header";
-import { useDeleteUser, useUsers } from "@/hooks/useUser";
+import { useDeleteUser, userKeys, useUsers } from "@/hooks/useUser";
 import { DataTable } from "@/tables/UserTable";
 import { User } from "@/types/type";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
@@ -12,6 +13,7 @@ import { toast } from "sonner";
 
 const UsersPage = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useUsers();
   const deleteUserMutation = useDeleteUser();
@@ -36,20 +38,44 @@ const UsersPage = () => {
   });
 
   const handleDelete = () => {
-    const userIds = selectedUsers.map((user) => user.id);
-
     setDeleteDialogOpen(false);
-    setSelectedUsers([]);
+    const usersId = selectedUsers.map((user) => user.id);
 
-    toast.promise(
-      () =>
-        Promise.all(userIds.map((id) => deleteUserMutation.mutateAsync(id))),
-      {
-        loading: "Deleting users...",
-        success: "Users deleted successfully.",
-        error: "Error deleting users.",
-      }
-    );
+    const oldUsersValue = queryClient.getQueryData<User[]>(userKeys.lists());
+
+    queryClient.cancelQueries({ queryKey: userKeys.lists() });
+
+    // Optimistically update BEFORE closing dialog
+    queryClient.setQueryData<User[]>(userKeys.lists(), (old) => {
+      if (!old) return [];
+      return old.filter((user) => !usersId.includes(user.id));
+    });
+
+    const timeOutId = setTimeout(() => {
+      setSelectedUsers([]);
+      toast.promise(
+        () =>
+          Promise.all(usersId.map((id) => deleteUserMutation.mutateAsync(id))),
+        {
+          loading: "Deleting users...",
+          success: "Users deleted successfully.",
+          error: "Error deleting users.",
+        }
+      );
+    }, 5000);
+
+    // Show undo toast
+    toast(`Deleting ${selectedUsers.length} user(s)...`, {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          clearTimeout(timeOutId);
+          queryClient.setQueryData<User[]>(userKeys.lists(), oldUsersValue);
+          toast.success("Delete undone.");
+        },
+      },
+      duration: 5000,
+    });
   };
 
   if (isLoading) return <div>Loading...</div>;
