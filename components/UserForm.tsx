@@ -24,17 +24,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, ArrowLeft, Save } from "lucide-react";
+import { Upload, ArrowLeft, Save, Edit, Eye } from "lucide-react";
 import { User, UserFormValues } from "@/types/type";
 import { userFormSchema } from "@/zod/user";
+import { useRouter } from "next/navigation";
 
 interface UserFormProps {
   user?: User;
+  onView?: () => void;
   handleApi: (data: UserFormValues) => Promise<void>;
 }
 
 const UserForm = (props: UserFormProps) => {
-  const { user, handleApi } = props;
+  const { user, handleApi, onView } = props;
+  const router = useRouter();
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -89,25 +92,32 @@ const UserForm = (props: UserFormProps) => {
     <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            className="mb-4"
-            onClick={() => window.history.back()}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Users
-          </Button>
+        <div className="mb-6 flex justify-between items-end">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">
-              {user ? "Edit User" : "Add New User"}
-            </h1>
-            <p className="text-slate-600 mt-1">
-              {user
-                ? "Update the user information"
-                : "Add a new user to the system"}
-            </p>
+            <Button
+              variant="ghost"
+              className="mb-4"
+              onClick={() => router.push("/user")}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Users
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">
+                {user ? "Edit User" : "Add New User"}
+              </h1>
+              <p className="text-slate-600 mt-1">
+                {user
+                  ? "Update the user information"
+                  : "Add a new user to the system"}
+              </p>
+            </div>
           </div>
+
+          <Button onClick={onView} className="gap-2">
+            <Eye className="h-4 w-4" />
+            View User
+          </Button>
         </div>
 
         {/* Form Card */}

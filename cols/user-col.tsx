@@ -15,8 +15,11 @@ import {
   ChevronUp,
   ChevronDown,
   Minus,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { useState } from "react";
+import { getRoleBadgeVariant } from "@/lib/utils";
 
 // Define event handler types
 export interface UserTableActions {
@@ -176,7 +179,11 @@ export const createUserColumns = (
   {
     accessorKey: "role",
     header: "Role",
-    cell: ({ row }) => <Badge variant="default">{row.getValue("role")}</Badge>,
+    cell: ({ row }) => (
+      <Badge variant={getRoleBadgeVariant(row.getValue("role"))}>
+        {row.getValue("role")}
+      </Badge>
+    ),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -186,9 +193,21 @@ export const createUserColumns = (
     header: "Status",
     cell: ({ row }) => {
       const isActive = row.getValue("active") as boolean;
-      return (
-        <Badge variant={isActive ? "default" : "secondary"}>
-          {isActive ? "Active" : "Inactive"}
+      return isActive ? (
+        <Badge
+          variant="outline"
+          className="bg-green-50 text-green-700 border-green-200"
+        >
+          <CheckCircle className="h-3 w-3 mr-1" />
+          Active
+        </Badge>
+      ) : (
+        <Badge
+          variant="outline"
+          className="bg-red-50 text-red-700 border-red-200"
+        >
+          <XCircle className="h-3 w-3 mr-1" />
+          Inactive
         </Badge>
       );
     },

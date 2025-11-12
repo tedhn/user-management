@@ -25,10 +25,10 @@ const UsersPage = () => {
 
   const columns = createUserColumns({
     onView: (user: User) => {
-      console.log("View user:", user);
+      router.push(`/user/${user.id}?mode=view`);
     },
     onEdit: (user: User) => {
-      router.push(`/user/${user.id}`);
+      router.push(`/user/${user.id}?mode=edit`);
     },
     onDelete: (user: User) => {
       setSelectedUsers([user]);

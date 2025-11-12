@@ -2,7 +2,7 @@
 
 import UserFormPage from "@/components/UserForm";
 import { UserFormValues } from "@/types/type";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCreateUser, useUpdateUser, useUser } from "@/hooks/useUser";
 
 import { toast as sonnerToast } from "sonner";
@@ -17,11 +17,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import UserDetailView from "@/components/UserDetails";
 
 const EditUserPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const params = useParams();
 
+  const mode = searchParams.get("mode");
+
+  const [isEditMode, setIsEditMode] = useState(mode === "edit");
   const [showDialog, setShowDialog] = useState(false);
   const [createUserData, setCreateUserData] = useState<UserFormValues | null>(
     null
@@ -63,8 +68,6 @@ const EditUserPage = () => {
     setShowDialog(false);
     router.push("/user");
 
-    console.log(createUserData);
-
     sonnerToast.promise(
       createUserMutation.mutateAsync({
         data: createUserData as UserFormValues,
@@ -77,12 +80,35 @@ const EditUserPage = () => {
     );
   };
 
+  const handleOnEditClick = (isEdit: boolean) => {
+    setIsEditMode(isEdit);
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Update or add mode param
+    params.set("mode", isEdit ? "edit" : "view");
+
+    // Push the new URL with updated params
+    router.push(`?${params.toString()}`);
+  };
+
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error loading user.</div>;
 
   return (
     <>
-      <UserFormPage user={userData} handleApi={handleUpdateUserApi} />
+      {isEditMode ? (
+        <UserFormPage
+          user={userData}
+          handleApi={handleUpdateUserApi}
+          onView={() => handleOnEditClick(false)}
+        />
+      ) : (
+        <UserDetailView
+          user={userData!}
+          onEdit={() => handleOnEditClick(true)}
+        />
+      )}
 
       <Dialog open={showDialog} onOpenChange={() => setShowDialog(false)}>
         <DialogContent className="sm:max-w-[400px]">
