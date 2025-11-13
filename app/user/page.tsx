@@ -2,6 +2,8 @@
 import { createUserColumns } from "@/cols/user-col";
 import { DeleteConfirmationDialog } from "@/components/dialog/DeleteDialog";
 import Header from "@/components/Header";
+import { LoadingComponent } from "@/components/loading";
+import { NotFoundComponet } from "@/components/NotFound";
 import { useDeleteUser, userKeys, useUsers } from "@/hooks/useUser";
 import { DataTable } from "@/tables/UserTable";
 import { User } from "@/types/type";
@@ -78,8 +80,8 @@ const UsersPage = () => {
     });
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (isLoading) return <LoadingComponent />;
+  if (error) return <NotFoundComponet />;
 
   return (
     <div className="container mx-auto py-10 ">

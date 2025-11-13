@@ -18,6 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import UserDetailView from "@/components/UserDetails";
+import { LoadingComponent } from "@/components/loading";
+import { NotFoundComponet } from "@/components/NotFound";
 
 const EditUserPage = () => {
   const router = useRouter();
@@ -92,8 +94,8 @@ const EditUserPage = () => {
     router.push(`?${params.toString()}`);
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error loading user.</div>;
+  if (isLoading) return <LoadingComponent />;
+  if (error) return <NotFoundComponet />;
 
   return (
     <>
